@@ -97,14 +97,33 @@ function drawStream() {
     ctx.restore();
 }
 
-// --- 音訊控制 ---
 function startAudio() {
     if (isAudioStarted) return;
-    isAudioStarted = true;
-    streamAudio.play().catch(e => console.error("Stream failed:", e));
-    startOverlay.classList.add('hidden');
-}
 
+    // 恢復 AudioContext
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+        const context = new AudioContext();
+        if (context.state === 'suspended') context.resume();
+    }
+
+    // 播放溪流
+    streamAudio.play()
+        .then(() => {
+            console.log("背景音已啟動");
+            isAudioStarted = true;
+            startOverlay.classList.add('hidden');
+        })
+        .catch(error => {
+            console.warn("無法自動播放背景音，可能是路徑錯誤或 404:", error);
+            // 即使背景音失敗，也要讓使用者能進入遊戲點擊水滴
+            startOverlay.innerHTML = "<h1>背景音載入中或失敗</h1><p>點擊此處繼續（仍可觸發水滴聲）</p>";
+            setTimeout(() => {
+                startOverlay.classList.add('hidden');
+                isAudioStarted = true; 
+            }, 2000);
+        });
+}
 function playDripSound() {
     dripAudio.currentTime = 0;
     dripAudio.play().catch(e => console.error("Drip failed:", e));
