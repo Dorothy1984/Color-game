@@ -2,65 +2,71 @@ body, html {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #0a0a0a;
+    background: linear-gradient(to bottom, #a0d8ef, #e0f7fa); /* 柔和的天空 */
     font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
 }
 
 #canvas {
     display: block;
-}
-
-/* 文字淡入淡出 */
-#intention-overlay {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 2rem;
-    letter-spacing: 0.5rem;
-    pointer-events: none;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-    opacity: 0;
-    transition: opacity 2s ease-in-out;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* 在背景之上 */
 }
 
-/* 底部氣泡容器 */
+/* 初始提示層 */
+#start-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100; /* 最上層 */
+    cursor: pointer;
+    transition: opacity 1s ease;
+}
+
+#start-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* 按鈕容器 (這次我們不用它來做佈局，而是在 JS 裡精確定位) */
 .controls {
     position: fixed;
-    bottom: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 20px;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; /* 讓 Canvas 能接收點擊 */
+    z-index: 10; /* 在 Canvas 之上 */
 }
 
-/* 氣泡樣式 */
+/* 氣泡按鈕樣式 */
 .bubble {
-    width: 60px;
-    height: 60px;
+    position: absolute; /* 關鍵：由 JS 定位 */
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    border: none;
+    border: 2px solid rgba(255, 255, 255, 0.5);
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.3), 
-                0 10px 20px rgba(0, 0, 0, 0.2);
-    color: white;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    color: #333;
     font-weight: bold;
-    transition: transform 0.3s ease;
-    animation: float 4s ease-in-out infinite;
+    pointer-events: auto; /* 恢復按鈕可點擊 */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* 移除之前的 float 動畫 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-shadow: 0 0 5px white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .bubble:hover {
-    transform: scale(1.2);
-    box-shadow: inset 0 0 25px rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2), inset 0 0 10px rgba(255, 255, 255, 0.8);
 }
-
-/* 漂浮動畫 (交錯時間) */
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-15px); }
-}
-
-.bubble:nth-child(even) { animation-delay: 1s; }
