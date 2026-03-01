@@ -1,4 +1,6 @@
-const canvas = document.getElementById('canvas');
+streamAudio.addEventListener('error', (e) => {
+    console.error("音訊元件發生錯誤：", streamAudio.error);
+});const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const startOverlay = document.getElementById('start-overlay');
 const streamAudio = document.getElementById('stream-audio');
@@ -121,7 +123,10 @@ function startAudio() {
             console.error("播放被攔截或失敗:", e);
             // 備案：如果還是失敗，讓使用者知道
             startOverlay.innerHTML = "<h1>請再點擊一次</h1><p>瀏覽器正在請求音訊權限</p>";
-     });
+// 刪除原本的 const streamAudio = document.getElementById('stream-audio');
+// 改成下面這行：
+const streamAudio = new Audio('natural.mp3');
+streamAudio.loop = true;     });
 }
 function playDripSound() {
     dripAudio.currentTime = 0;
