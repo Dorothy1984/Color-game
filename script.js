@@ -1,104 +1,210 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const overlay = document.getElementById('intention-overlay');
-let particles = [];
+const startOverlay = document.getElementById('start-overlay');
+const streamAudio = document.getElementById('stream-audio');
+const dripAudio = document.getElementById('drip-audio');
+const bubbles = document.querySelectorAll('.bubble');
 
-// 初始化畫布大小
+let animationObjects = []; // 存儲水滴和漣漪
+let isAudioStarted = false;
+
+// 設置畫布和彩虹/小溪佈局參數
+let rainbowParams = {
+    centerX: 0,
+    centerY: 0,
+    radius: 0,
+    width: 60,
+    colors: ['#ff4d4d', '#ffa64d', '#ffff4d', '#4dff4d', '#4dffff', '#4d4dff', '#b34dff'] // 紅到紫
+};
+
+let streamParams = {
+    y: 0,
+    height: 0
+};
+
+// --- 初始化與佈局 ---
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
 
-// --- 音訊邏輯 (Web Audio API) ---
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // 計算彩虹和小溪的位置 (彩虹在半空，小溪在底部)
+    rainbowParams.centerX = canvas.width / 2;
+    rainbowParams.centerY = canvas.height * 0.6; // 彩虹底部中心
+    rainbowParams.radius = canvas.width * 0.35; // 彩虹半徑
 
-function playTone(freq) {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    streamParams.y = canvas.height * 0.75;
+    streamParams.height = canvas.height * 0.25;
 
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-    gain.gain.setValueAtTime(0, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 1); // 漸強
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 4); // 漸弱
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 4);
+    positionBubbles(); // 重新計算按鈕位置
 }
 
-// --- 水墨粒子邏輯 ---
-class Particle {
-    constructor(x, y, color) {
-        this.x = x;
-        this.y = y;
+// 精確定位七個按鈕到彩虹的各個顏色弧度上
+function positionBubbles() {
+    const startAngle = Math.PI; // 180度 (左側)
+    const endAngle = 0; // 0度 (右側)
+    const totalAngle = startAngle - endAngle; // 弧度總長
+
+    // 彩虹共有7層，我們取每一層的中心弧度
+    rainbowParams.colors.forEach((color, index) => {
+        const bubble = bubbles[index];
+        const bubbleRadius = rainbowParams.radius + (index * (rainbowParams.width / 7)) - (rainbowParams.width / 2); // 取層中心
+
+        // 均勻分佈按鈕在弧度上 (紅左紫右)
+        const angle = startAngle - (index / (rainbowParams.colors.length - 1)) * totalAngle;
+
+        const x = rainbowParams.centerX + bubbleRadius * Math.cos(angle);
+        const y = rainbowParams.centerY + bubbleRadius * Math.sin(angle); // 注意：sin 在此處需要微調位置
+
+        bubble.style.left = `${x - 25}px`; // 減去按鈕半徑
+        bubble.style.top = `${y - 25}px`;
+    });
+}
+
+// --- 繪圖邏輯 ---
+
+// 繪製背景彩虹
+function drawRainbow() {
+    ctx.save();
+    ctx.lineWidth = rainbowParams.width / 7; // 每一層的寬度
+    ctx.lineCap = 'round';
+
+    rainbowParams.colors.forEach((color, index) => {
+        ctx.beginPath();
+        const currentRadius = rainbowParams.radius + (index * ctx.lineWidth);
+        ctx.arc(rainbowParams.centerX, rainbowParams.centerY, currentRadius, Math.PI, 0); // 繪製半圓弧
+        ctx.strokeStyle = color;
+        ctx.stroke();
+    });
+    ctx.restore();
+}
+
+// 繪製小溪
+function drawStream() {
+    ctx.save();
+    ctx.fillStyle = '#b3e5fc'; // 柔和的水藍色
+    ctx.fillRect(0, streamParams.y, canvas.width, streamParams.height);
+
+    // 加一點裝飾性的波紋效果
+    ctx.beginPath();
+    ctx.moveTo(0, streamParams.y);
+    for (let x = 0; x < canvas.width; x += 20) {
+        ctx.lineTo(x, streamParams.y + Math.sin(x * 0.03 + (Date.now() * 0.001)) * 5);
+    }
+    ctx.lineTo(canvas.width, canvas.height);
+    ctx.lineTo(0, canvas.height);
+    ctx.fillStyle = 'rgba(179, 229, 252, 0.8)';
+    ctx.fill();
+    ctx.restore();
+}
+
+// --- 音訊控制 ---
+function startAudio() {
+    if (isAudioStarted) return;
+    isAudioStarted = true;
+    streamAudio.play().catch(e => console.error("Stream failed:", e));
+    startOverlay.classList.add('hidden');
+}
+
+function playDripSound() {
+    dripAudio.currentTime = 0;
+    dripAudio.play().catch(e => console.error("Drip failed:", e));
+}
+
+// --- 動畫粒子系統 (水滴與漣漪) ---
+
+class Droplet {
+    constructor(startX, startY, endY, color) {
+        this.x = startX;
+        this.y = startY;
+        this.endY = endY;
         this.color = color;
-        this.size = Math.random() * 20 + 10;
-        this.speedX = (Math.random() - 0.5) * 2;
-        this.speedY = (Math.random() - 0.5) * 2;
-        this.opacity = 0.8;
+        this.speed = 5 + Math.random() * 2;
+        this.size = 6;
+        this.type = 'droplet';
     }
 
     update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        this.size += 1.5; // 模擬擴散
-        this.opacity -= 0.005;
+        this.y += this.speed;
+        if (this.y >= this.endY) {
+            // 滴落到溪水，轉化為漣漪
+            this.type = 'ripple';
+            this.y = this.endY; // 修正位置
+            this.size = 20; // 漣漪初始大小
+            this.opacity = 1;
+            this.expandSpeed = 2;
+            playDripSound(); // 播放水滴聲
+        }
     }
 
     draw() {
         ctx.save();
-        ctx.globalAlpha = this.opacity;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
-        ctx.filter = 'blur(30px)'; // 關鍵：水墨感
         ctx.fill();
         ctx.restore();
     }
 }
 
-function animate() {
-    // 留下一點殘影效果，讓水墨感更重
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.1)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+class Ripple {
+    // 雖然和 Droplet 共享 animationObjects，但行為不同，這裡不寫成 constructor，而是從 Droplet 轉化
+    constructor() {} // 這裡不初始化
+}
 
-    particles.forEach((p, index) => {
-        p.update();
-        p.draw();
-        if (p.opacity <= 0) particles.splice(index, 1);
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除畫布
+
+    // 1. 繪製靜態背景 (彩虹和小溪)
+    drawRainbow();
+    drawStream();
+
+    // 2. 繪製動態對象
+    animationObjects.forEach((obj, index) => {
+        if (obj.type === 'droplet') {
+            obj.update();
+            obj.draw();
+        } else if (obj.type === 'ripple') {
+            // 漣漪邏輯
+            obj.size += obj.expandSpeed;
+            obj.opacity -= 0.015;
+
+            ctx.save();
+            ctx.globalAlpha = obj.opacity;
+            ctx.beginPath();
+            ctx.arc(obj.x, obj.y, obj.size, 0, Math.PI * 2);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = obj.color;
+            ctx.stroke();
+            ctx.restore();
+
+            if (obj.opacity <= 0) {
+                animationObjects.splice(index, 1); // 漣漪消失
+            }
+        }
     });
+
     requestAnimationFrame(animate);
 }
-animate();
 
 // --- 互動邏輯 ---
-document.querySelectorAll('.bubble').forEach(btn => {
+
+// 初始化
+window.addEventListener('resize', resize);
+startOverlay.addEventListener('click', startAudio);
+resize();
+animate();
+
+// 點擊按鈕
+bubbles.forEach(btn => {
     btn.addEventListener('click', (e) => {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-
         const color = btn.getAttribute('data-color');
-        const freq = btn.getAttribute('data-freq');
-        const msg = btn.getAttribute('data-msg');
+        
+        // 獲取按鈕在螢幕上的位置
+        const rect = btn.getBoundingClientRect();
+        const startX = rect.left + rect.width / 2;
+        const startY = rect.top + rect.height; // 從按鈕底部滴落
 
-        // 1. 播放頻率
-        playTone(freq);
-
-        // 2. 產生擴散粒子
-        for (let i = 0; i < 15; i++) {
-            particles.push(new Particle(window.innerWidth / 2, window.innerHeight / 2, color));
-        }
-
-        // 3. 顯示文字
-        overlay.innerText = msg;
-        overlay.style.opacity = 1;
-        setTimeout(() => {
-            overlay.style.opacity = 0;
-        }, 3000); // 3秒後開始淡出，總計約5秒完成
+        // 產生一滴水滴
+        animationObjects.push(new Droplet(startX, startY, streamParams.y, color));
     });
 });
