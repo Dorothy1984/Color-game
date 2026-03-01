@@ -100,29 +100,28 @@ function drawStream() {
 function startAudio() {
     if (isAudioStarted) return;
 
-    // 恢復 AudioContext
+    // 1. 強制讓 Audio 標籤重新加載最新的檔案
+    streamAudio.load(); 
+
+    // 2. 恢復 Web Audio 上下文 (針對 Chrome/Safari)
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (AudioContext) {
         const context = new AudioContext();
-        if (context.state === 'suspended') context.resume();
+        context.resume();
     }
 
-    // 播放溪流
+    // 3. 嘗試播放
     streamAudio.play()
         .then(() => {
-            console.log("背景音已啟動");
+            console.log("溪流背景音播放成功！");
             isAudioStarted = true;
             startOverlay.classList.add('hidden');
         })
-        .catch(error => {
-            console.warn("無法自動播放背景音，可能是路徑錯誤或 404:", error);
-            // 即使背景音失敗，也要讓使用者能進入遊戲點擊水滴
-            startOverlay.innerHTML = "<h1>背景音載入中或失敗</h1><p>點擊此處繼續（仍可觸發水滴聲）</p>";
-            setTimeout(() => {
-                startOverlay.classList.add('hidden');
-                isAudioStarted = true; 
-            }, 2000);
-        });
+        .catch(e => {
+            console.error("播放被攔截或失敗:", e);
+            // 備案：如果還是失敗，讓使用者知道
+            startOverlay.innerHTML = "<h1>請再點擊一次</h1><p>瀏覽器正在請求音訊權限</p>";
+     });
 }
 function playDripSound() {
     dripAudio.currentTime = 0;
