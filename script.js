@@ -1,22 +1,22 @@
-streamAudio.addEventListener('error', (e) => {
-    console.error("音訊元件發生錯誤：", streamAudio.error);
-});const canvas = document.getElementById('canvas');
+// 1. 元素獲取
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const startOverlay = document.getElementById('start-overlay');
 const streamAudio = document.getElementById('stream-audio');
 const dripAudio = document.getElementById('drip-audio');
 const bubbles = document.querySelectorAll('.bubble');
 
-let animationObjects = []; // 存儲水滴和漣漪
+// 2. 狀態變數
+let animationObjects = []; 
 let isAudioStarted = false;
 
-// 設置畫布和彩虹/小溪佈局參數
+// 3. 佈局參數
 let rainbowParams = {
     centerX: 0,
     centerY: 0,
     radius: 0,
     width: 60,
-    colors: ['#ff4d4d', '#ffa64d', '#ffff4d', '#4dff4d', '#4dffff', '#4d4dff', '#b34dff'] // 紅到紫
+    colors: ['#ff4d4d', '#ffa64d', '#ffff4d', '#4dff4d', '#4dffff', '#4d4dff', '#b34dff']
 };
 
 let streamParams = {
@@ -29,64 +29,55 @@ function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // 計算彩虹和小溪的位置 (彩虹在半空，小溪在底部)
     rainbowParams.centerX = canvas.width / 2;
-    rainbowParams.centerY = canvas.height * 0.6; // 彩虹底部中心
-    rainbowParams.radius = canvas.width * 0.35; // 彩虹半徑
+    rainbowParams.centerY = canvas.height * 0.6; 
+    rainbowParams.radius = canvas.width * 0.35; 
 
     streamParams.y = canvas.height * 0.75;
     streamParams.height = canvas.height * 0.25;
 
-    positionBubbles(); // 重新計算按鈕位置
+    positionBubbles();
 }
 
-// 精確定位七個按鈕到彩虹的各個顏色弧度上
 function positionBubbles() {
-    const startAngle = Math.PI; // 180度 (左側)
-    const endAngle = 0; // 0度 (右側)
-    const totalAngle = startAngle - endAngle; // 弧度總長
+    const startAngle = Math.PI;
+    const endAngle = 0;
+    const totalAngle = startAngle - endAngle;
 
-    // 彩虹共有7層，我們取每一層的中心弧度
     rainbowParams.colors.forEach((color, index) => {
         const bubble = bubbles[index];
-        const bubbleRadius = rainbowParams.radius + (index * (rainbowParams.width / 7)) - (rainbowParams.width / 2); // 取層中心
-
-        // 均勻分佈按鈕在弧度上 (紅左紫右)
+        const bubbleRadius = rainbowParams.radius + (index * (rainbowParams.width / 7)) - (rainbowParams.width / 2);
         const angle = startAngle - (index / (rainbowParams.colors.length - 1)) * totalAngle;
 
         const x = rainbowParams.centerX + bubbleRadius * Math.cos(angle);
-        const y = rainbowParams.centerY + bubbleRadius * Math.sin(angle); // 注意：sin 在此處需要微調位置
+        const y = rainbowParams.centerY + bubbleRadius * Math.sin(angle);
 
-        bubble.style.left = `${x - 25}px`; // 減去按鈕半徑
+        bubble.style.left = `${x - 25}px`;
         bubble.style.top = `${y - 25}px`;
     });
 }
 
 // --- 繪圖邏輯 ---
-
-// 繪製背景彩虹
 function drawRainbow() {
     ctx.save();
-    ctx.lineWidth = rainbowParams.width / 7; // 每一層的寬度
+    ctx.lineWidth = rainbowParams.width / 7;
     ctx.lineCap = 'round';
 
     rainbowParams.colors.forEach((color, index) => {
         ctx.beginPath();
         const currentRadius = rainbowParams.radius + (index * ctx.lineWidth);
-        ctx.arc(rainbowParams.centerX, rainbowParams.centerY, currentRadius, Math.PI, 0); // 繪製半圓弧
+        ctx.arc(rainbowParams.centerX, rainbowParams.centerY, currentRadius, Math.PI, 0);
         ctx.strokeStyle = color;
         ctx.stroke();
     });
     ctx.restore();
 }
 
-// 繪製小溪
 function drawStream() {
     ctx.save();
-    ctx.fillStyle = '#b3e5fc'; // 柔和的水藍色
+    ctx.fillStyle = '#b3e5fc';
     ctx.fillRect(0, streamParams.y, canvas.width, streamParams.height);
 
-    // 加一點裝飾性的波紋效果
     ctx.beginPath();
     ctx.moveTo(0, streamParams.y);
     for (let x = 0; x < canvas.width; x += 20) {
@@ -99,63 +90,69 @@ function drawStream() {
     ctx.restore();
 }
 
+// --- 音訊核心邏輯 ---
 function startAudio() {
     if (isAudioStarted) return;
 
-    // 1. 強制讓 Audio 標籤重新加載最新的檔案
-    streamAudio.load(); 
-
-    // 2. 恢復 Web Audio 上下文 (針對 Chrome/Safari)
+    // A. 喚醒 AudioContext
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (AudioContext) {
         const context = new AudioContext();
-        context.resume();
+        if (context.state === 'suspended') context.resume();
     }
 
-    // 3. 嘗試播放
+    // B. 背景音處理：設置音量漸增防止被攔截
+    streamAudio.volume = 0;
+    streamAudio.load(); 
+    
     streamAudio.play()
         .then(() => {
-            console.log("溪流背景音播放成功！");
+            console.log("背景音啟動成功");
             isAudioStarted = true;
             startOverlay.classList.add('hidden');
+            
+            // 平滑淡入音量
+            let vol = 0;
+            const fadeIn = setInterval(() => {
+                if (vol < 0.4) {
+                    vol += 0.02;
+                    streamAudio.volume = vol;
+                } else {
+                    clearInterval(fadeIn);
+                }
+            }, 100);
         })
         .catch(e => {
-            console.error("播放被攔截或失敗:", e);
-            // 備案：如果還是失敗，讓使用者知道
-            startOverlay.innerHTML = "<h1>請再點擊一次</h1><p>瀏覽器正在請求音訊權限</p>";
-// 刪除原本的 const streamAudio = document.getElementById('stream-audio');
-// 改成下面這行：
-const streamAudio = new Audio('natural.mp3');
-streamAudio.loop = true;     });
+            console.error("播放攔截:", e);
+            startOverlay.innerHTML = "<h1>請再次點擊螢幕</h1><p>以開啟小溪流聲</p>";
+        });
 }
+
 function playDripSound() {
     dripAudio.currentTime = 0;
-    dripAudio.play().catch(e => console.error("Drip failed:", e));
+    dripAudio.play().catch(e => console.log("等待互動後播放水滴"));
 }
 
-// --- 動畫粒子系統 (水滴與漣漪) ---
-
+// --- 動畫系統 ---
 class Droplet {
     constructor(startX, startY, endY, color) {
         this.x = startX;
         this.y = startY;
         this.endY = endY;
         this.color = color;
-        this.speed = 5 + Math.random() * 2;
-        this.size = 6;
+        this.speed = 6;
+        this.size = 5;
         this.type = 'droplet';
     }
 
     update() {
         this.y += this.speed;
         if (this.y >= this.endY) {
-            // 滴落到溪水，轉化為漣漪
             this.type = 'ripple';
-            this.y = this.endY; // 修正位置
-            this.size = 20; // 漣漪初始大小
+            this.y = this.endY;
+            this.size = 10;
             this.opacity = 1;
-            this.expandSpeed = 2;
-            playDripSound(); // 播放水滴聲
+            playDripSound();
         }
     }
 
@@ -169,65 +166,47 @@ class Droplet {
     }
 }
 
-class Ripple {
-    // 雖然和 Droplet 共享 animationObjects，但行為不同，這裡不寫成 constructor，而是從 Droplet 轉化
-    constructor() {} // 這裡不初始化
-}
-
 function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除畫布
-
-    // 1. 繪製靜態背景 (彩虹和小溪)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawRainbow();
     drawStream();
 
-    // 2. 繪製動態對象
     animationObjects.forEach((obj, index) => {
         if (obj.type === 'droplet') {
             obj.update();
             obj.draw();
-        } else if (obj.type === 'ripple') {
+        } else {
             // 漣漪邏輯
-            obj.size += obj.expandSpeed;
+            obj.size += 1.5;
             obj.opacity -= 0.015;
-
             ctx.save();
             ctx.globalAlpha = obj.opacity;
             ctx.beginPath();
             ctx.arc(obj.x, obj.y, obj.size, 0, Math.PI * 2);
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 3;
             ctx.strokeStyle = obj.color;
             ctx.stroke();
             ctx.restore();
-
-            if (obj.opacity <= 0) {
-                animationObjects.splice(index, 1); // 漣漪消失
-            }
+            if (obj.opacity <= 0) animationObjects.splice(index, 1);
         }
     });
-
     requestAnimationFrame(animate);
 }
 
-// --- 互動邏輯 ---
-
-// 初始化
+// --- 事件綁定 ---
 window.addEventListener('resize', resize);
 startOverlay.addEventListener('click', startAudio);
-resize();
-animate();
 
-// 點擊按鈕
 bubbles.forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', () => {
         const color = btn.getAttribute('data-color');
-        
-        // 獲取按鈕在螢幕上的位置
         const rect = btn.getBoundingClientRect();
         const startX = rect.left + rect.width / 2;
-        const startY = rect.top + rect.height; // 從按鈕底部滴落
-
-        // 產生一滴水滴
+        const startY = rect.top + rect.height;
         animationObjects.push(new Droplet(startX, startY, streamParams.y, color));
     });
 });
+
+// 啟動
+resize();
+animate();
