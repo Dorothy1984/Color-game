@@ -70,3 +70,27 @@ body, html {
     transform: scale(1.1);
     box-shadow: 0 8px 25px rgba(0,0,0,0.2), inset 0 0 10px rgba(255, 255, 255, 0.8);
 }
+function startAudio() {
+    if (isAudioStarted) return;
+    
+    // 解決部分瀏覽器需要恢復 AudioContext 的問題
+    if (window.AudioContext || window.webkitAudioContext) {
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        if (context.state === 'suspended') {
+            context.resume();
+        }
+    }
+
+    // 播放溪流
+    streamAudio.play()
+        .then(() => {
+            console.log("溪流背景音開始播放");
+            isAudioStarted = true;
+            startOverlay.classList.add('hidden');
+        })
+        .catch(e => {
+            console.error("播放失敗，請確認檔案路徑或格式：", e);
+            // 如果失敗，依然隱藏遮罩讓使用者能互動，但提示錯誤
+            startOverlay.innerHTML = "<h1>音訊載入失敗</h1><p>請檢查 stream.mp3 是否存在</p>";
+        });
+}
