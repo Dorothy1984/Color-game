@@ -3,29 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>心靈彩繪 - 彩虹小溪療癒畫板</title>
+    <title>七彩水彩畫板</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="start-overlay">
-        <h1>點擊螢幕開啟療癒之旅</h1>
-        <p>（需要開啟音訊）</p>
+        <h1>點擊開啟水彩畫板</h1>
+        <p>（開啟音訊以聆聽水滴聲）</p>
     </div>
 
     <canvas id="canvas"></canvas>
 
-    <div class="controls">
-        <button class="bubble" data-color="#ff4d4d" data-index="0">紅</button>
-        <button class="bubble" data-color="#ffa64d" data-index="1">橙</button>
-        <button class="bubble" data-color="#ffff4d" data-index="2">黃</button>
-        <button class="bubble" data-color="#4dff4d" data-index="3">綠</button>
-        <button class="bubble" data-color="#4dffff" data-index="4">藍</button>
-        <button class="bubble" data-color="#4d4dff" data-index="5">靛</button>
-        <button class="bubble" data-color="#b34dff" data-index="6">紫</button>
+    <div class="toolbar">
+        <button id="clear-btn">清空畫板</button>
     </div>
 
-    <audio id="stream-audio" src="natural.mp3" loop preload="auto"></audio>
-<audio id="drip-audio" src="drip.mp3" preload="auto"></audio>
+    <div class="controls">
+        <button class="bubble" data-color="#ff4d4d" style="--c: #ff4d4d">紅</button>
+        <button class="bubble" data-color="#ffa64d" style="--c: #ffa64d">橙</button>
+        <button class="bubble" data-color="#ffff4d" style="--c: #ffff4d">黃</button>
+        <button class="bubble" data-color="#4dff4d" style="--c: #4dff4d">綠</button>
+        <button class="bubble" data-color="#4dffff" style="--c: #4dffff">藍</button>
+        <button class="bubble" data-color="#4d4dff" style="--c: #4d4dff">靛</button>
+        <button class="bubble" data-color="#b34dff" style="--c: #b34dff">紫</button>
+    </div>
+
+    <audio id="drip-audio" src="drip.mp3" preload="auto"></audio>
     <script src="script.js"></script>
 </body>
 </html>
