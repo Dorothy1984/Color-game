@@ -6,7 +6,8 @@ const bubbles = document.querySelectorAll('.bubble');
 const clearBtn = document.getElementById('clear-btn');
 
 let isDrawing = false;
-let currentColor = '#ff4d4d'; // 預設紅色
+let currentColor = '#ff4d4d'; 
+let currentRGB = '255, 77, 77'; // 預設紅色的 RGB 值
 let lastX = 0;
 let lastY = 0;
 
@@ -14,95 +15,125 @@ let lastY = 0;
 function initCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    // 給畫布一個底色（紙張感）
     ctx.fillStyle = '#fdfdfd';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-// 繪圖邏輯：使用模糊圓點模擬水彩
-function draw(e) {
+// 將 Hex 顏色轉為 RGB 供 rgba 使用
+function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `${r}, ${g}, ${b}`;
+}
+
+// 繪圖核心邏輯
+function draw(x, y) {
     if (!isDrawing) return;
 
-    const x = e.clientX || e.touches[0].clientX;
-    const y = e.clientY || e.touches[0].clientY;
-
     ctx.save();
-    // 模擬水彩疊色效果
+    // 使用正片疊底模擬水彩疊色
     ctx.globalCompositeOperation = 'multiply'; 
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(x, y);
     
-    // 畫筆樣式：半透明且邊緣模糊
-    ctx.strokeStyle = currentColor + '33'; // 加入透明度 (HEX + 33)
-    ctx.lineWidth = 30;
+    ctx.beginPath();
+    ctx.lineWidth = 25;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = currentColor;
+    
+    // 設置柔和筆觸
+    ctx.strokeStyle = `rgba(${currentRGB}, 0.2)`; 
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = `rgba(${currentRGB}, 0.5)`;
+
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
     ctx.stroke();
     ctx.restore();
 
-    [lastX, lastY] = [x, y];
+    lastX = x;
+    lastY = y;
 }
 
-// 互動事件
-function handleStart(e) {
+// 處理不同裝置的座標
+function getCoords(e) {
+    if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+}
+
+// 事件監聽
+canvas.addEventListener('mousedown', (e) => {
     isDrawing = true;
-    [lastX, lastY] = [e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY];
-}
+    const { x, y } = getCoords(e);
+    lastX = x;
+    lastY = y;
+});
 
-canvas.addEventListener('mousedown', handleStart);
-canvas.addEventListener('mousemove', draw);
+window.addEventListener('mousemove', (e) => {
+    const { x, y } = getCoords(e);
+    draw(x, y);
+});
+
 window.addEventListener('mouseup', () => isDrawing = false);
 
 // 觸控支援
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); });
-canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    isDrawing = true;
+    const { x, y } = getCoords(e);
+    lastX = x;
+    lastY = y;
+}, { passive: false });
 
-// 切換顏色與播放聲音
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const { x, y } = getCoords(e);
+    draw(x, y);
+}, { passive: false });
+
+// 切換顏色
 bubbles.forEach(btn => {
     btn.addEventListener('click', () => {
-        // 更新當前顏色
-        currentColor = btn.getAttribute('data-color');
+        const hex = btn.getAttribute('data-color');
+        currentColor = hex;
+        currentRGB = hexToRgb(hex);
         
-        // 切換按鈕樣式
         bubbles.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
-        // 播放水滴聲
+        // 播放聲音
         dripAudio.currentTime = 0;
         dripAudio.play().catch(() => {});
 
-        // 視覺特效：在隨機位置滴下一滴大水彩
+        // 隨機滴落視覺效果
         const dropX = Math.random() * canvas.width;
         const dropY = Math.random() * canvas.height;
         ctx.save();
         ctx.globalCompositeOperation = 'multiply';
         ctx.beginPath();
-        ctx.arc(dropX, dropY, 40, 0, Math.PI * 2);
-        ctx.fillStyle = currentColor + '22';
-        ctx.filter = 'blur(10px)';
+        ctx.arc(dropX, dropY, 30, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${currentRGB}, 0.1)`;
+        ctx.filter = 'blur(8px)';
         ctx.fill();
         ctx.restore();
     });
 });
 
-// 清空畫板
 clearBtn.addEventListener('click', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     initCanvas();
 });
 
-// 啟動遮罩
 startOverlay.addEventListener('click', () => {
     startOverlay.style.display = 'none';
-    // 解決部分瀏覽器音訊啟動問題
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (AudioContext) new AudioContext().resume();
+    if (AudioContext) {
+        const context = new AudioContext();
+        context.resume();
+    }
 });
 
 window.addEventListener('resize', initCanvas);
 initCanvas();
-// 預設選中第一個
 bubbles[0].classList.add('active');
