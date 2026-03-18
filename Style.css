@@ -1,20 +1,31 @@
 body, html {
-    margin: 0; padding: 0; overflow: hidden;
+    margin: 0; 
+    padding: 0; 
+    /* 使用 svh 確保在手機網址列出現時，高度依然正確 */
+    height: 100svh; 
+    width: 100vw;
+    overflow: hidden;
     background-color: #fdfdfd;
     font-family: sans-serif;
-    /* 防止手機長按選出文字 */
     -webkit-user-select: none;
     user-select: none;
+    /* 修正 iOS 橡皮條滾動問題 */
+    position: fixed; 
 }
 
 #canvas { 
     display: block; 
-    cursor: crosshair; 
-    z-index: 1; /* 畫布在底層 */
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    touch-action: none; /* 禁用瀏覽器預設手勢，防止畫畫時網頁捲動 */
 }
 
 #start-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; 
+    height: 100svh;
     background: rgba(255, 255, 255, 1);
     display: flex; flex-direction: column; justify-content: center;
     align-items: center; z-index: 200; cursor: pointer;
@@ -22,46 +33,63 @@ body, html {
 
 .toolbar {
     position: fixed; 
-    top: env(safe-area-inset-top, 20px); 
-    right: 20px; 
-    z-index: 150; /* 確保在畫布之上 */
+    /* 使用 safe-area 確保不會被瀏海或開孔屏遮擋 */
+    top: env(safe-area-inset-top, 10px); 
+    right: 10px; 
+    z-index: 150;
     display: flex;
-    gap: 10px;
+    gap: 8px;
 }
 
 .tool-btn {
-    padding: 8px 15px; border-radius: 20px; border: 1px solid #ccc;
-    background: rgba(255, 255, 255, 0.9); cursor: pointer; transition: 0.3s;
-    font-size: 14px;
+    padding: 6px 12px; 
+    border-radius: 15px; 
+    border: 1px solid #ddd;
+    background: rgba(255, 255, 255, 0.95);
+    cursor: pointer;
+    font-size: 13px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .controls {
     position: fixed; 
-    bottom: calc(20px + env(safe-area-inset-bottom)); /* 考慮手機底部安全區 */
-    left: 50%;
-    transform: translateX(-50%); 
+    /* 向上提升位置，避開瀏覽器底部的工具欄 */
+    bottom: calc(35px + env(safe-area-inset-bottom)); 
+    left: 0;
+    right: 0;
     display: flex; 
-    gap: 10px; 
-    z-index: 150; /* 確保顏色按鈕不被遮蔽 */
-    width: 90%;
     justify-content: center;
-    flex-wrap: nowrap; /* 確保按鈕在同一排 */
+    align-items: center;
+    gap: 8px; 
+    z-index: 150;
+    padding: 0 10px;
+    pointer-events: none; /* 防止容器阻擋畫布點擊 */
 }
 
 .bubble {
-    flex-shrink: 1; /* 寬度不足時自動縮小 */
-    width: 12vw; height: 12vw; /* 根據螢幕寬度調整大小 */
-    max-width: 50px; max-height: 50px;
-    min-width: 35px; min-height: 35px;
-    border-radius: 50%; border: 3px solid white;
-    background: var(--c); cursor: pointer; color: white;
-    font-size: 10px; font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: 0.2s;
-    display: flex; justify-content: center; align-items: center;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    pointer-events: auto; /* 讓按鈕可以被點擊 */
+    flex: 0 0 auto;
+    width: 11vw; 
+    height: 11vw; 
+    max-width: 45px; 
+    max-height: 45px;
+    min-width: 32px; 
+    min-height: 32px;
+    border-radius: 50%; 
+    border: 2px solid white;
+    background: var(--c); 
+    cursor: pointer; 
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2); 
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    color: white;
+    font-size: 10px;
 }
 
 .bubble.active {
-    transform: scale(1.15) translateY(-5px);
-    box-shadow: 0 0 15px var(--c);
+    transform: scale(1.3) translateY(-8px);
+    box-shadow: 0 5px 15px var(--c);
+    border-width: 3px;
 }
