@@ -8,21 +8,17 @@ const saveBtn = document.getElementById('save-btn');
 
 let isDrawing = false;
 let currentRGB = '255, 77, 77'; 
-let lastX = 0;
-let lastY = 0;
+let lastX = 0, lastY = 0;
 
 function initCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    // 重新繪製白色背景，否則存圖會變透明
     ctx.fillStyle = '#fdfdfd';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function hexToRgb(hex) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+    const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
     return `${r}, ${g}, ${b}`;
 }
 
@@ -45,58 +41,31 @@ function draw(x, y) {
 }
 
 function getCoords(e) {
-    const rect = canvas.getBoundingClientRect();
-    if (e.touches && e.touches.length > 0) {
-        return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
-    }
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
 }
 
-// 事件監聽
-canvas.addEventListener('mousedown', (e) => {
-    isDrawing = true;
-    const { x, y } = getCoords(e);
-    lastX = x; lastY = y;
-});
-window.addEventListener('mousemove', (e) => {
-    const { x, y } = getCoords(e);
-    draw(x, y);
-});
+canvas.addEventListener('mousedown', (e) => { isDrawing = true; const c = getCoords(e); lastX = c.x; lastY = c.y; });
+window.addEventListener('mousemove', (e) => { const c = getCoords(e); draw(c.x, c.y); });
 window.addEventListener('mouseup', () => isDrawing = false);
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; const c = getCoords(e); lastX = c.x; lastY = c.y; }, { passive: false });
+canvas.addEventListener('touchmove', (e) => { e.preventDefault(); const c = getCoords(e); draw(c.x, c.y); }, { passive: false });
 
-// 觸控
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    isDrawing = true;
-    const { x, y } = getCoords(e);
-    lastX = x; lastY = y;
-}, { passive: false });
-canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    const { x, y } = getCoords(e);
-    draw(x, y);
-}, { passive: false });
-
-// 儲存功能
 saveBtn.addEventListener('click', () => {
     const link = document.createElement('a');
-    link.download = 'my-watercolor-painting.png';
+    link.download = 'my-watercolor.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
 });
 
-// 清空功能
-clearBtn.addEventListener('click', () => {
-    if(confirm('確定要清空畫板嗎？')) initCanvas();
-});
+clearBtn.addEventListener('click', () => { if(confirm('確定要清空畫板嗎？')) initCanvas(); });
 
-// 顏色切換
 bubbles.forEach(btn => {
     btn.addEventListener('click', () => {
-        const hex = btn.getAttribute('data-color');
-        currentRGB = hexToRgb(hex);
-        bubbles.forEach(b => b.classList.remove('active'));
+        currentRGB = hexToRgb(btn.getAttribute('data-color'));
+        bubbles.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
         btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
         dripAudio.currentTime = 0;
         dripAudio.play().catch(() => {});
     });
