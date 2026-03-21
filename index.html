@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>七彩水彩畫板</title>
+    <title>七彩水彩畫板 - 療癒版</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="start-overlay">
+    <div id="start-overlay" role="button" aria-label="點擊開啟畫板">
         <h1>點擊開啟水彩畫板</h1>
         <p>（開啟音訊以聆聽水滴聲）</p>
     </div>
@@ -19,14 +19,14 @@
         <button id="clear-btn" class="tool-btn">清空畫板</button>
     </div>
 
-    <div class="controls">
-        <button class="bubble" data-color="#ff4d4d" style="--c: #ff4d4d">紅</button>
-        <button class="bubble" data-color="#ffa64d" style="--c: #ffa64d">橙</button>
-        <button class="bubble" data-color="#ffff4d" style="--c: #ffff4d">黃</button>
-        <button class="bubble" data-color="#4dff4d" style="--c: #4dff4d">綠</button>
-        <button class="bubble" data-color="#4dffff" style="--c: #4dffff">藍</button>
-        <button class="bubble" data-color="#4d4dff" style="--c: #4d4dff">靛</button>
-        <button class="bubble" data-color="#b34dff" style="--c: #b34dff">紫</button>
+    <div class="controls" role="group" aria-label="選取畫筆顏色">
+        <button class="bubble" data-color="#ff4d4d" style="--c: #ff4d4d" aria-label="紅色筆刷">紅</button>
+        <button class="bubble" data-color="#ffa64d" style="--c: #ffa64d" aria-label="橙色筆刷">橙</button>
+        <button class="bubble" data-color="#ffff4d" style="--c: #ffff4d" aria-label="黃色筆刷">黃</button>
+        <button class="bubble" data-color="#4dff4d" style="--c: #4dff4d" aria-label="綠色筆刷">綠</button>
+        <button class="bubble" data-color="#4dffff" style="--c: #4dffff" aria-label="藍色筆刷">藍</button>
+        <button class="bubble" data-color="#4d4dff" style="--c: #4d4dff" aria-label="靛色筆刷">靛</button>
+        <button class="bubble" data-color="#b34dff" style="--c: #b34dff" aria-label="紫色筆刷">紫</button>
     </div>
 
     <audio id="drip-audio" src="drip.mp3" preload="auto"></audio>
