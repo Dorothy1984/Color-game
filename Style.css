@@ -1,4 +1,4 @@
-/* 徹底鎖定螢幕，不准產生第二頁 */
+/* 彻底鎖定螢幕，不准產生捲動條 */
 html, body {
     margin: 0;
     padding: 0;
@@ -17,7 +17,6 @@ html, body {
     touch-action: none;
 }
 
-/* 讓遮罩也鎖定在第一層 */
 #start-overlay {
     position: fixed;
     top: 0; left: 0;
@@ -28,7 +27,6 @@ html, body {
     justify-content: center; align-items: center;
 }
 
-/* 頂部工具列 */
 .toolbar {
     position: fixed;
     top: env(safe-area-inset-top, 10px);
@@ -59,8 +57,8 @@ html, body {
     width: 52px; height: 52px;
     border-radius: 50%; border: 3px solid white;
     background: var(--c); color: white;
-    /* 確保字體放大到 20px */
-    font-size: 20px; font-weight: bold;
+    /* 核心修正：將字體強制放大到 30px */
+    font-size: 30px; font-weight: bold;
     display: flex; justify-content: center; align-items: center;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
