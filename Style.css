@@ -1,68 +1,44 @@
-/* 彻底鎖定螢幕，不准產生捲動條 */
+/* 基礎設定 */
 html, body {
-    margin: 0;
-    padding: 0;
-    width: 100vw;
-    height: 100svh; /* 關鍵：使用 svh 自動避開網址列 */
-    overflow: hidden; /* 強制禁止捲動 */
-    position: fixed; /* 防止橡皮條回彈 */
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
     background-color: #fdfdfd;
 }
 
-#canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    touch-action: none;
-}
+#canvas { display: block; width: 100%; height: 100%; z-index: 1; }
 
-#start-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100svh;
-    background: white;
-    z-index: 200;
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-}
-
+/* 頂部工具列 */
 .toolbar {
-    position: fixed;
-    top: env(safe-area-inset-top, 10px);
-    right: 10px;
-    z-index: 150;
-    display: flex; gap: 8px;
+    position: fixed; top: 20px; right: 20px;
+    z-index: 150; display: flex; gap: 15px;
 }
 
 .tool-btn {
-    padding: 8px 12px; border-radius: 15px;
-    background: white; border: 1px solid #ccc;
-    font-size: 16px;
+    padding: 10px 20px; border-radius: 25px;
+    background: white; border: 2px solid #ddd;
+    font-size: 18px; cursor: pointer;
 }
 
-/* 底部按鈕控制區：確保永遠在工具欄上方 */
+/* 底部按鈕區 - 針對電腦版優化 */
 .controls {
     position: fixed;
-    /* 大幅調升位置，確保不被底部工具欄遮擋 */
-    bottom: calc(110px + env(safe-area-inset-bottom)); 
+    bottom: 50px; /* 電腦版留在底部即可 */
     left: 0; right: 0;
-    display: flex; justify-content: center; gap: 8px;
+    display: flex; justify-content: center; gap: 20px;
     z-index: 150;
-    pointer-events: none;
 }
 
 .bubble {
-    pointer-events: auto;
-    width: 52px; height: 52px;
-    border-radius: 50%; border: 3px solid white;
+    width: 80px; height: 80px; /* 增大按鈕圓圈 */
+    border-radius: 50%; border: 4px solid white;
     background: var(--c); color: white;
-    /* 核心修正：將字體強制放大到 30px */
-    font-size: 30px; font-weight: bold;
+    /* 強力放大字體至 35px */
+    font-size: 35px; font-weight: 900; 
     display: flex; justify-content: center; align-items: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.2s;
 }
 
-.bubble.active {
-    transform: scale(1.2) translateY(-10px);
-}
+.bubble.active { transform: scale(1.2); box-shadow: 0 0 20px var(--c); }
