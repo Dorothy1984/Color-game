@@ -68,7 +68,13 @@ bubbles.forEach(btn => {
         btn.setAttribute('aria-pressed', 'true');
         dripAudio.currentTime = 0;
         dripAudio.play().catch(() => {});
-    });
+    });// 在 script.js 的 bubbles.forEach 循環內加入：
+bubbles.forEach(btn => {
+    // 將 aria-label 的標籤改為：
+    btn.setAttribute('aria-label', btn.innerText + "色筆刷"); // 讓 VoiceOver 讀出「紅色筆刷」
+    // 修改為：
+    btn.setAttribute('aria-label', btn.innerText + "色"); // 讓 VoiceOver 讀出「紅色」即可
+});
 });
 
 startOverlay.addEventListener('click', () => {
