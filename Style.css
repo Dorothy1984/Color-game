@@ -5,43 +5,38 @@ html, body {
     background-color: #fdfdfd;
 }
 
-/* 確保畫布顯示在正確層級 */
+/* 畫布層級 */
 #canvas {
     display: block;
     position: absolute;
     top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    z-index: 5; /* 提升層級 */
+    z-index: 10; /* 確保畫布在中間層 */
     touch-action: none;
     cursor: crosshair;
 }
 
-.toolbar {
-    position: fixed; top: 20px; right: 20px;
-    z-index: 100; display: flex; gap: 10px;
+/* 工具與按鈕必須在畫布之上 */
+.toolbar, .controls {
+    position: fixed;
+    z-index: 50; /* 高於畫布，才能被點擊 */
 }
 
-.controls {
-    position: fixed; bottom: 40px;
-    left: 0; right: 0;
-    display: flex; justify-content: center; gap: 15px;
-    z-index: 100;
-}
+.toolbar { top: 20px; right: 20px; display: flex; gap: 10px; }
+.controls { bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; }
 
 .bubble {
-    width: 70px; height: 70px;
-    border-radius: 50%; border: 3px solid white;
+    width: 75px; height: 75px; border-radius: 50%; border: 3px solid white;
     background: var(--c); color: white;
-    font-size: 30px; font-weight: 900;
+    font-size: 35px; font-weight: 900; /* 強力放大字體 */
     display: flex; justify-content: center; align-items: center;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     cursor: pointer;
 }
 
-.bubble.active { transform: scale(1.1); border-color: #333; }
-
+/* 初始遮罩：最上層 */
 #start-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: white; z-index: 200;
+    background: white; z-index: 100;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
+    cursor: pointer;
 }
