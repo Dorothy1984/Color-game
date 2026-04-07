@@ -1,35 +1,49 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>七彩水彩畫板 - 療癒版</title>
-<link rel="stylesheet" href="style.css?v=final_bold">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>水彩畫板</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div id="start-overlay" role="button" aria-label="點擊開啟畫板">
-        <h1>點擊開啟水彩畫板</h1>
-        <p>（開啟音訊以聆聽水滴聲）</p>
-    </div>
+  <!-- 畫布 -->
+  <canvas id="canvas"></canvas>
 
-    <canvas id="canvas"></canvas>
+  <!-- 工具列 -->
+  <div class="toolbar">
+    <button id="clear-btn" class="bubble" style="--c:#6c757d" title="清除">⟲</button>
+    <button id="download-btn" class="bubble" style="--c:#198754" title="下載">⤓</button>
+  </div>
 
-    <div class="toolbar">
-        <button id="save-btn" class="tool-btn">儲存畫作</button>
-        <button id="clear-btn" class="tool-btn">清空畫板</button>
-    </div>
+  <!-- 控制列 -->
+  <div class="controls">
+    <label class="ctrl">
+      顏色
+      <input id="color" type="color" value="#3b82f6" />
+    </label>
+    <label class="ctrl">
+      粗細
+      <input id="size" type="range" min="1" max="60" step="1" value="16" />
+    </label>
+    <label class="ctrl">
+      濕度
+      <input id="alpha" type="range" min="0.05" max="1" step="0.05" value="0.35" />
+    </label>
+  </div>
 
-    <div class="controls" role="group" aria-label="選取畫筆顏色">
-        <button class="bubble" data-color="#ff4d4d" style="--c: #ff4d4d" aria-label="紅色筆刷">紅</button>
-        <button class="bubble" data-color="#ffa64d" style="--c: #ffa64d" aria-label="橙色筆刷">橙</button>
-        <button class="bubble" data-color="#ffff4d" style="--c: #ffff4d" aria-label="黃色筆刷">黃</button>
-        <button class="bubble" data-color="#4dff4d" style="--c: #4dff4d" aria-label="綠色筆刷">綠</button>
-        <button class="bubble" data-color="#4dffff" style="--c: #4dffff" aria-label="藍色筆刷">藍</button>
-        <button class="bubble" data-color="#4d4dff" style="--c: #4d4dff" aria-label="靛色筆刷">靛</button>
-        <button class="bubble" data-color="#b34dff" style="--c: #b34dff" aria-label="紫色筆刷">紫</button>
-    </div>
+  <!-- 起始遮罩（點一下開始作畫） -->
+  <div id="start-overlay">
+    <h1>點一下開始作畫</h1>
+    <p>支援滑鼠、觸控與手寫筆</p>
+  </div>
 
-    <audio id="drip-audio" src="drip.mp3" preload="auto"></audio>
-    <script src="script.js"></script>
+  <!-- 可選：水滴聲（示意） -->
+  <audio id="drop-audio" preload="auto">
+    <source src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAA..." type="audio/mpeg" />
+  </audio>
+
+  <script src="script.js" defer></script>
 </body>
 </html>
+      
