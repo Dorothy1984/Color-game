@@ -1,4 +1,3 @@
-/* 基礎設定 */
 html, body {
     margin: 0; padding: 0;
     width: 100vw; height: 100vh;
@@ -6,39 +5,43 @@ html, body {
     background-color: #fdfdfd;
 }
 
-#canvas { display: block; width: 100%; height: 100%; z-index: 1; }
+/* 確保畫布顯示在正確層級 */
+#canvas {
+    display: block;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 5; /* 提升層級 */
+    touch-action: none;
+    cursor: crosshair;
+}
 
-/* 頂部工具列 */
 .toolbar {
     position: fixed; top: 20px; right: 20px;
-    z-index: 150; display: flex; gap: 15px;
+    z-index: 100; display: flex; gap: 10px;
 }
 
-.tool-btn {
-    padding: 10px 20px; border-radius: 25px;
-    background: white; border: 2px solid #ddd;
-    font-size: 18px; cursor: pointer;
-}
-
-/* 底部按鈕區 - 針對電腦版優化 */
 .controls {
-    position: fixed;
-    bottom: 50px; /* 電腦版留在底部即可 */
+    position: fixed; bottom: 40px;
     left: 0; right: 0;
-    display: flex; justify-content: center; gap: 20px;
-    z-index: 150;
+    display: flex; justify-content: center; gap: 15px;
+    z-index: 100;
 }
 
 .bubble {
-    width: 80px; height: 80px; /* 增大按鈕圓圈 */
-    border-radius: 50%; border: 4px solid white;
+    width: 70px; height: 70px;
+    border-radius: 50%; border: 3px solid white;
     background: var(--c); color: white;
-    /* 強力放大字體至 35px */
-    font-size: 35px; font-weight: 900; 
+    font-size: 30px; font-weight: 900;
     display: flex; justify-content: center; align-items: center;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     cursor: pointer;
-    transition: transform 0.2s;
 }
 
-.bubble.active { transform: scale(1.2); box-shadow: 0 0 20px var(--c); }
+.bubble.active { transform: scale(1.1); border-color: #333; }
+
+#start-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: white; z-index: 200;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
