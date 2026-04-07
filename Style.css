@@ -3,22 +3,28 @@ html, body {
     width: 100vw; height: 100vh;
     overflow: hidden;
     background-color: #fdfdfd;
+    -webkit-user-select: none; user-select: none;
 }
 
-/* 畫布層級 */
+/* 畫布層級：在背景之上、工具列之下 */
 #canvas {
     display: block;
     position: absolute;
-    top: 0; left: 0;
-    z-index: 10; /* 確保畫布在中間層 */
-    touch-action: none;
+    inset: 0;              /* top:0; right:0; bottom:0; left:0 */
+    width: 100vw;
+    height: 100vh;
+    z-index: 10;           /* 中間層，能接到指標事件 */
+    touch-action: none;    /* 禁止瀏覽器預設手勢，利於繪圖 */
     cursor: crosshair;
+    background: transparent;
 }
 
-/* 工具與按鈕必須在畫布之上 */
+/* 工具與按鈕必須在畫布之上（但不覆蓋全幅） */
 .toolbar, .controls {
     position: fixed;
-    z-index: 50; /* 高於畫布，才能被點擊 */
+    z-index: 50;           /* 高於畫布 */
+    pointer-events: auto;  /* 確保可點擊 */
+    font-family: ui-sans-serif, -apple-system, "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
 }
 
 .toolbar { top: 20px; right: 20px; display: flex; gap: 10px; }
@@ -27,16 +33,36 @@ html, body {
 .bubble {
     width: 75px; height: 75px; border-radius: 50%; border: 3px solid white;
     background: var(--c); color: white;
-    font-size: 35px; font-weight: 900; /* 強力放大字體 */
+    font-size: 35px; font-weight: 900;
     display: flex; justify-content: center; align-items: center;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     cursor: pointer;
 }
 
-/* 初始遮罩：最上層 */
+.ctrl {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(0,0,0,0.05);
+    padding: 10px 14px; border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-weight: 600;
+}
+.ctrl input[type="range"] { width: 200px; }
+.ctrl input[type="color"] { width: 44px; height: 32px; padding: 0; border: none; background: transparent; }
+
+/* 初始遮罩：最上層（修正：互動後必定關閉且不阻擋事件） */
 #start-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: white; z-index: 100;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
+    background: white;
+    z-index: 100;           /* 高於畫布 */
     cursor: pointer;
+    transition: opacity .25s ease;
 }
+#start-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;   /* 不再攔截點擊/滑動 */
+}
+#start-overlay.hidden.done {
+    display: none;          /* 動畫結束後真正移除 */
+}
+      
