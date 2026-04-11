@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>水彩畫板 - 穩定修復版</title>
+    <style>
+        /* 1. CSS 樣式：確保完全不依賴外部檔案 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body, html { 
+            width: 100%; height: 100%; 
+            overflow: hidden; 
+            background-color: #fdfdfd; 
+            font-family: "MingLiU", "新細明體", serif; /* 鎖定新細明體 */
+        }
+
+        /* 頂部按鈕區 */
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            z-index: 100; /* 確保在畫布最上方 */
+        }
+
+        .bubble {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            background-color: var(--c);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* 字體要求：12pt 新細明體 */
+            font-family: "MingLiU", "新細明體", serif;
+            font-size: 12pt;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        .bubble.active {
+            border: 3px solid #000;
+            transform: scale(1.1);
+        }
+
+        /* 畫布 */
+        #canvas {
+            display: block;
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        /* 啟動遮罩 */
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9);
+            z-index: 200;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <h2 style="font-family: 'MingLiU';">點擊開啟畫板</h2>
+    </div>
+
+    <div class="controls" role="group" aria-label="選取顏色">
+        <div class="bubble" style="--c: #ffb3b3;" data-color="255,179,179" aria-label="紅色">紅</div>
+        <div class="bubble" style="--c: #ffe0b3;" data-color="255,224,179" aria-label="橙色">橙</div>
+        <div class="bubble" style="--c: #ffffcc;" data-color="255,255,204" aria-label="黃色">黃</div>
+        <div class="bubble" style="--c: #d1ffdb;" data-color="209,255,219" aria-label="綠色">綠</div>
+        <div class="bubble" style="--c: #d1f7ff;" data-color="209,247,255" aria-label="青色">青</div>
+        <div class="bubble" style="--c: #d1d1ff;" data-color="209,209,255" aria-label="藍色">藍</div>
+        <div class="bubble" style="--c: #ebd1ff;" data-color="235,209,255" aria-label="紫色">紫</div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <audio id="drip-sound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+
+    <script>
+        // 2. JavaScript 邏輯：完全自包含
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('overlay');
+        const dripSound = document.getElementById('drip-sound');
+        const bubbles = document.querySelectorAll('.bubble');
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let selectedColor = "255,179,179"; // 初始紅色
+        let points = []; // 儲存點位以供流暢渲染
+
+        // 初始化畫布
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // 保持白色背景
+            ctx.fillStyle = "#fdfdfd";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 核心繪圖邏輯：使用 requestAnimationFrame 優化性能
+        function render() {
+            if (isDrawing && points.length > 1) {
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.beginPath();
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = 30; // 粗筆觸更像水彩
+                ctx.strokeStyle = `rgba(${selectedColor}, 0.15)`; // 低透明度勻開效果
+
+                const lastPoint = points[points.length - 2];
+                const currentPoint = points[points.length - 1];
+
+                ctx.moveTo(lastPoint.x, lastPoint.y);
+                ctx.lineTo(currentPoint.x, currentPoint.y);
+                ctx.stroke();
+            }
+            requestAnimationFrame(render);
+        }
+        requestAnimationFrame(render);
+
+        // 輸入事件處理
+        function start(x, y) {
+            isDrawing = true;
+            lastX = x;
+            lastY = y;
+            points = [{x, y}];
+        }
+
+        function move(x, y) {
+            if (!isDrawing) return;
+            points.push({x, y});
+        }
+
+        function end() {
+            isDrawing = false;
+            points = [];
+        }
+
+        // 滑鼠監聽
+        canvas.addEventListener('mousedown', e => start(e.clientX, e.clientY));
+        window.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+        window.addEventListener('mouseup', end);
+
+        // 觸控監聽
+        canvas.addEventListener('touchstart', e => {
+            const t = e.touches[0];
+            start(t.clientX, t.clientY);
+        }, {passive: false});
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            const t = e.touches[0];
+            move(t.clientX, t.clientY);
+        }, {passive: false});
+        canvas.addEventListener('touchend', end);
+
+        // 按鈕點擊
+        bubbles.forEach(b => {
+            b.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectedColor = b.getAttribute('data-color');
+                
+                // 切換 active 樣式
+                bubbles.forEach(btn => btn.classList.remove('active'));
+                b.classList.add('active');
+
+                // 播放音效
+                dripSound.currentTime = 0;
+                dripSound.play().catch(() => {});
+            });
+        });
+
+        // 遮罩關閉
+        overlay.addEventListener('click', () => {
+            overlay.style.display = 'none';
+            // 啟動 AudioContext (部分瀏覽器要求)
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioCtx.resume();
+        });
+
+        // 預設選中第一個
+        bubbles[0].classList.add('active');
+    </script>
+</body>
+</html>
