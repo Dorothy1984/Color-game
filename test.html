@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>水彩畫板</title>
+    <style>
+        /* 強制重置，排除所有干擾 */
+        * { margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; }
+        html, body { width: 100% !important; height: 100% !important; overflow: hidden !important; background: #ffffff !important; }
+        
+        /* 頂部按鈕：新細明體 12pt */
+        .controls {
+            position: fixed !important; top: 20px !important; left: 0 !important; width: 100% !important;
+            display: flex !important; justify-content: center !important; gap: 10px !important; z-index: 999 !important;
+        }
+        .bubble {
+            width: 50px !important; height: 50px !important; border-radius: 50% !important;
+            border: 2px solid #ccc !important; background-color: var(--c) !important;
+            display: flex !important; justify-content: center !important; align-items: center !important;
+            font-family: "MingLiU", "新細明體", serif !important; font-size: 12pt !important;
+            cursor: pointer !important; user-select: none !important;
+        }
+
+        /* 畫布：確保撐滿 */
+        #canvas { position: absolute !important; top: 0 !important; left: 0 !important; z-index: 1 !important; display: block !important; }
+
+        /* 遮罩 */
+        #overlay {
+            position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;
+            background: #ffffff !important; z-index: 1000 !important;
+            display: flex !important; justify-content: center !important; align-items: center !important;
+        }
+    </style>
+</head>
+<body>
+
+<div id="overlay" onclick="startApp()">
+    <h1 style="font-family: 'MingLiU';">點擊開啟</h1>
+</div>
+
+<div class="controls">
+    <div class="bubble" style="--c:#ffb3b3;" onclick="changeColor('255,179,179')">紅</div>
+    <div class="bubble" style="--c:#ffe0b3;" onclick="changeColor('255,224,179')">橙</div>
+    <div class="bubble" style="--c:#ffffcc;" onclick="changeColor('255,255,204')">黃</div>
+    <div class="bubble" style="--c:#d1ffdb;" onclick="changeColor('209,255,219')">綠</div>
+    <div class="bubble" style="--c:#d1f7ff;" onclick="changeColor('209,247,255')">青</div>
+    <div class="bubble" style="--c:#d1d1ff;" onclick="changeColor('209,209,255')">藍</div>
+    <div class="bubble" style="--c:#ebd1ff;" onclick="changeColor('235,209,255')">紫</div>
+</div>
+
+<canvas id="canvas"></canvas>
+<audio id="sound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let color = "255,179,179";
+
+    function init() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function startApp() {
+        document.getElementById('overlay').style.display = 'none';
+        init();
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioCtx.resume();
+    }
+
+    function changeColor(c) {
+        color = c;
+        const s = document.getElementById('sound');
+        s.currentTime = 0;
+        s.play().catch(()=>{});
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        const x = e.touches ? e.touches[0].clientX : e.clientX;
+        const y = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 30;
+        ctx.strokeStyle = `rgba(${color}, 0.15)`;
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); draw(e); });
+    window.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', () => isDrawing = false);
+
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); draw(e); }, {passive:false});
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive:false});
+    canvas.addEventListener('touchend', () => isDrawing = false);
+
+    window.addEventListener('resize', init);
+    init();
+</script>
+
+</body>
+</html>
