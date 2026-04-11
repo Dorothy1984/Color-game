@@ -3,85 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>水彩畫板 - 最終修復版</title>
+    <title>水彩畫板</title>
     <style>
-        /* 1. CSS 樣式鎖定 */
+        /* 基礎鎖定：防止任何偏移與捲動 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body, html { 
-            width: 100%; height: 100%; 
-            overflow: hidden; 
-            background-color: #ffffff; 
+        html, body { 
+            width: 100%; height: 100%; overflow: hidden; 
+            background-color: #fdfdfd; 
             font-family: "MingLiU", "新細明體", serif;
         }
 
-        /* 頂部按鈕區：絕對定位在頂層 */
+        /* 頂部按鈕：絕對定位在最上層 */
         .controls {
-            position: absolute;
-            top: 15px; left: 0; width: 100%;
-            display: flex; justify-content: center;
-            gap: 12px; z-index: 100;
+            position: fixed; top: 15px; left: 0; width: 100%;
+            display: flex; justify-content: center; gap: 10px;
+            z-index: 100; pointer-events: none; /* 讓容器不擋住繪畫 */
         }
-
         .bubble {
-            width: 42px; height: 42px;
-            border-radius: 50%;
-            border: 1.5px solid #999;
-            background-color: var(--c);
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            /* 嚴格執行指令：新細明體 12pt */
-            font-family: "MingLiU", "新細明體", serif;
-            font-size: 12pt;
-            color: #000000;
-            user-select: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 45px; height: 45px; border-radius: 50%;
+            border: 1.5px solid #999; background-color: var(--c);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 12pt; font-weight: bold; color: #000;
+            cursor: pointer; pointer-events: auto; /* 按鈕本身要能點擊 */
+            user-select: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .bubble.active { border: 3px solid #000; transform: scale(1.1); }
 
-        .bubble.active {
-            border: 3px solid #000;
-            transform: scale(1.1);
-        }
+        /* 畫布層 */
+        #canvas { position: absolute; top: 0; left: 0; z-index: 1; touch-action: none; }
 
-        /* 畫布：鋪滿全螢幕但層級在按鈕下方 */
-        #canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 1;
-            touch-action: none;
-        }
-
-        /* 遮罩 */
+        /* 開啟遮罩 */
         #overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #ffffff; z-index: 200;
-            display: flex; justify-content: center; align-items: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             cursor: pointer;
         }
+        .start-btn { padding: 15px 30px; border: 2px solid #000; border-radius: 10px; font-size: 1.5rem; }
     </style>
 </head>
 <body>
 
     <div id="overlay">
-        <h2 style="font-family: 'MingLiU';">點擊開啟畫板</h2>
+        <div class="start-btn">點擊開啟水彩畫板</div>
+        <p style="margin-top:15px; color:#666;">(開啟音訊以聆聽水滴聲)</p>
     </div>
 
-    <div class="controls" role="group" aria-label="顏色選單">
-        <div class="bubble" style="--c: #ffcccc;" data-rgb="255,204,204" aria-label="紅色">紅</div>
-        <div class="bubble" style="--c: #ffe5cc;" data-rgb="255,229,204" aria-label="橙色">橙</div>
-        <div class="bubble" style="--c: #ffffcc;" data-rgb="255,255,204" aria-label="黃色">黃</div>
-        <div class="bubble" style="--c: #ccffcc;" data-rgb="204,255,204" aria-label="綠色">綠</div>
-        <div class="bubble" style="--c: #ccf2ff;" data-rgb="204,242,255" aria-label="青色">青</div>
-        <div class="bubble" style="--c: #ccccff;" data-rgb="204,204,255" aria-label="藍色">藍</div>
-        <div class="bubble" style="--c: #f2ccff;" data-rgb="242,204,255" aria-label="紫色">紫</div>
+    <div class="controls">
+        <div class="bubble" style="--c:#ffb3b3;" data-rgb="255,179,179">紅</div>
+        <div class="bubble" style="--c:#ffe0b3;" data-rgb="255,224,179">橙</div>
+        <div class="bubble" style="--c:#ffffcc;" data-rgb="255,255,204">黃</div>
+        <div class="bubble" style="--c:#d1ffdb;" data-rgb="209,255,219">綠</div>
+        <div class="bubble" style="--c:#d1f7ff;" data-rgb="209,247,255">青</div>
+        <div class="bubble" style="--c:#d1d1ff;" data-rgb="209,209,255">藍</div>
+        <div class="bubble" style="--c:#ebd1ff;" data-rgb="235,209,255">紫</div>
     </div>
 
     <canvas id="canvas"></canvas>
 
-    <audio id="drip-sound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" preload="auto"></audio>
+    <audio id="drip-sound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
     <script>
         const canvas = document.getElementById('canvas');
@@ -91,98 +71,73 @@
         const bubbles = document.querySelectorAll('.bubble');
 
         let isDrawing = false;
-        let selectedColor = "255,204,204"; // 預設紅
+        let selectedColor = "255,179,179";
 
-        // 初始化畫布大小
-        function init() {
+        // 強制初始化畫布，確保撐滿螢幕
+        function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            ctx.fillStyle = "#ffffff";
+            ctx.fillStyle = "#fdfdfd";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        // 獲取精確座標 (解決畫不到的問題)
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
+        // 精確座標獲取
+        function getXY(e) {
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
+            return { x: clientX, y: clientY };
         }
 
-        function startDrawing(e) {
+        function start(e) {
             isDrawing = true;
-            const pos = getPos(e);
+            const { x, y } = getXY(e);
             ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
+            ctx.moveTo(x, y);
         }
 
         function draw(e) {
             if (!isDrawing) return;
-            const pos = getPos(e);
-            
+            const { x, y } = getXY(e);
             ctx.globalCompositeOperation = 'multiply';
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.lineWidth = 35; // 寬筆觸呈現渲染感
+            ctx.lineWidth = 30;
             ctx.strokeStyle = `rgba(${selectedColor}, 0.15)`;
-            
-            ctx.lineTo(pos.x, pos.y);
+            ctx.lineTo(x, y);
             ctx.stroke();
         }
 
-        function stopDrawing() {
-            isDrawing = false;
-        }
-
-        // 事件監聽 (滑鼠)
-        canvas.addEventListener('mousedown', startDrawing);
+        // 事件綁定
+        canvas.addEventListener('mousedown', start);
         window.addEventListener('mousemove', draw);
-        window.addEventListener('mouseup', stopDrawing);
+        window.addEventListener('mouseup', () => isDrawing = false);
 
-        // 事件監聽 (觸控)
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.target === canvas) e.preventDefault();
-            startDrawing(e);
-        }, {passive: false});
-        canvas.addEventListener('touchmove', (e) => {
-            if (e.target === canvas) e.preventDefault();
-            draw(e);
-        }, {passive: false});
-        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); }, {passive:false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive:false});
+        canvas.addEventListener('touchend', () => isDrawing = false);
 
-        // 顏色按鈕邏輯
+        // 顏色切換
         bubbles.forEach(b => {
             b.addEventListener('click', (e) => {
-                e.stopPropagation();
                 selectedColor = b.getAttribute('data-rgb');
-                
-                // 樣式切換
                 bubbles.forEach(btn => btn.classList.remove('active'));
                 b.classList.add('active');
-
-                // 音效播放
                 dripSound.currentTime = 0;
-                dripSound.play().catch(err => console.log("Audio play blocked"));
+                dripSound.play().catch(()=>{});
             });
         });
 
-        // 啟動遮罩
+        // 啟動按鈕：關鍵在於啟動後才 resize，確保畫布大小正確
         overlay.addEventListener('click', () => {
             overlay.style.display = 'none';
-            init(); // 確保遮罩消失後才正式定稿畫布尺寸
+            resizeCanvas();
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             audioCtx.resume();
         });
 
-        // 視窗縮放處理
-        window.addEventListener('resize', init);
-        
-        // 預設狀態
+        window.addEventListener('resize', resizeCanvas);
         bubbles[0].classList.add('active');
-        init();
+        resizeCanvas(); // 預先執行一次
     </script>
 </body>
 </html>
