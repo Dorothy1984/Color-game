@@ -1,2 +1,43 @@
-# Color-game
-This is a game helping children with special needs to release and convert emotions.  Seven colors of rainbow are used to represent seven emotions.  When player press a button, the color will be dripped in water and melt and stress-relief low-fi music will be played.  Letting players know that emotions can be seen, heard and converted.
+# Watercolor Drawing Board (水彩畫板遊戲) - 專案總結報告
+
+## 專案簡介
+這是一個為特殊需要兒童開發的水彩繪畫遊戲，旨在透過視覺（七彩水彩）、聽覺（水滴聲）與觸覺（流暢筆觸）的互動，協助孩子釋放與轉化情緒。
+
+## 專案狀態 (2026-04-12)
+- **當前版本**：單一 HTML 混合檔案 (Single HTML File)。
+- **核心功能**：
+  - 提供紅、橙、黃、綠、青、藍、紫七色按鈕。
+  - 按鈕字體鎖定為「新細明體 (MingLiU)」，大小 12pt。
+  - 點擊按鈕觸發水滴音效。
+  - 使用 HTML5 Canvas 模擬水彩「勻開」與「疊加」效果。
+- **運行說明**：請直接訪問 `https://dorothy1984.github.io/color-game/test.html` (或對應的 HTML 檔名)。
+
+## 過程中踩過的坑 (開發經驗紀錄)
+在開發過程中，我們遇到了數次功能失效與介面跑偏的問題，以下為技術總結：
+
+1. **GitHub Pages 快取 (Cache) 陷阱**：
+   - **問題**：修改代碼後，瀏覽器網址列若只輸入目錄名（不含檔名），會優先讀取舊的 `index.html` 快取，導致畫面出現已刪除的舊功能（如儲存按鈕）。
+   - **坑點**：必須手動指定具體檔名（如 `/test.html`）來強制刷新，否則無法驗證最新代碼。
+
+2. **Canvas 座標偏移與佈局衝突**：
+   - **問題**：畫布與上方按鈕區塊的層級關係若處理不當，會導致「畫不到」或座標對不準。
+   - **坑點**：若 Canvas 寬高初始化與 CSS 渲染不同步，座標系統會錯亂。最後改用 `getBoundingClientRect()` 與鎖定 `absolute` 定位解決。
+
+3. **混合檔案 (Inlined Code) 的必要性**：
+   - **問題**：多檔案模式（HTML/CSS/JS 分開）容易因路徑引用錯誤或異步載入導致初始化失敗。
+   - **解決**：將所有邏輯整合至單一 HTML，確保代碼執行時環境 100% 受控。
+
+4. **瀏覽器自動翻譯與緩存干擾**：
+   - **問題**：按鈕文字被誤翻成英文或顯示舊版內容。
+   - **坑點**：即便 HTML 寫了中文，舊的緩存和瀏覽器插件會干擾 DOM 渲染。
+
+## 現時侷限與遺憾
+1. **平台相容性**：
+   - 目前代碼針對 **「行動裝置 (手機/平板)」** 進行了深度優化，觸控繪畫表現穩定。
+   - **網頁版 (PC/滑鼠操作)** 目前存在失效狀況。推測與 PC 瀏覽器對 `globalCompositeOperation` 的渲染機制或滑鼠事件與觸控事件的共存衝突有關。
+
+2. **功能簡化**：
+   - 為了確保核心「繪圖」功能穩定，暫時捨棄了儲存、清空畫板等進階按鈕，以維持畫面的純粹與最簡化佈局。
+
+## 結語
+本專案目前以「手機版可正常運作」為最終驗收標準。感謝過程中家人的耐心測試與反饋。
